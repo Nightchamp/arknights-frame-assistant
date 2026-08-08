@@ -4,23 +4,53 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-明日方舟帧操小助手（ArknightsFrameAssistant, AFA）— 优化明日方舟 PC 端体验的 Windows 工具。基于 **AutoHotkey v2** 开发，提供全按键自定义、过帧操作、卫戍协议一键操作等功能。仅对明日方舟进程生效。
+明日方舟帧操小助手（ArknightsFrameAssistant, AFA）当前发布版是优化明日方舟 PC 端体验的 Windows 工具，基于 **AutoHotkey v2** 开发。本 fork 同时用于开发 macOS 版本。
 
-## 构建与开发
+## 平台路由
+
+- 每项任务开始前先判断目标是现有 Windows/AHK 实现、macOS 实现，还是跨平台共享内容。
+- Windows/AHK 任务遵循下方 Windows 构建、架构和代码规范，并优先读取仓库内 AHK/Win32 文档。
+- macOS 任务遵循 macOS 实现实际采用的语言、项目配置和工具链；不要套用 AHK、Win32 或 Windows 手工测试约束。行尾遵循 `.gitattributes`，macOS 源码不额外强制 CRLF。
+- 跨平台改动分别验证受影响的平台，不为尚未落地的 macOS 技术栈预设结构或依赖。
+
+## Windows 实现：构建与开发
 
 - **语言**: AutoHotkey v2
 - **编辑器**: 推荐 VS Code + AHK++ 扩展
-- **AHK 文档**: `docs/ahk_docs/` 目录包含最新的 AHK v2 官方文档。开发时优先读取 `ahk_docs/lib/` 下的对应 `.htm` 文件（如 `ahk_docs/lib/Control.htm`），而非依赖模型内置的 AHK 知识，因为内置知识可能过时或不完整。
-- **Win32文档**: `docs/win_docs/` 目录包含项目所需的Windows API 文档，开发时优先读取 `win_docs/` 下的对应 `.md` 文件
+- **AHK 文档**: `docs/ahk_docs/` 目录包含最新的 AHK v2 官方文档。Windows/AHK 开发时优先读取 `ahk_docs/lib/` 下的对应 `.htm` 文件（如 `ahk_docs/lib/Control.htm`），而非依赖模型内置的 AHK 知识，因为内置知识可能过时或不完整。
+- **Win32文档**: `docs/win_docs/` 目录包含项目所需的 Windows API 文档。Windows/AHK 开发时优先读取 `win_docs/` 下的对应 `.md` 文件。
 - **入口文件**: `src/main.ahk`
 - 没有编译步骤 — AHK 脚本可直接运行。发布时用 AutoHotkey 编译器打包为 exe。
-- 不要尝试自己编译或者启动脚本，如有需要测试验证的项请告知用户，由用户操作并反馈
-- 没有自动化测试框架，所有测试为手工验证。每次完成工作后，调用 `test-checklist` skill 生成测试清单，逐项引导用户完成手工验证。测试清单放在 `test/` 目录，格式参考 `test/template/test_template.md`。
+- 不要尝试编译或启动 Windows/AHK 程序；需要运行时验证时由用户在 Windows 上操作并反馈。
+- Windows 实现没有自动化测试框架。完成功能行为或用户可见改动后，调用 `test-checklist` skill 生成手工测试清单，放在 `test/` 目录，格式参考 `test/template/test_template.md`。
+
+## macOS 实现：构建与开发
+
+- 以 macOS 实现目录内的项目配置、脚本和文档为工具链真相来源；技术栈落地前不要自行假设。
+- 允许并应运行 macOS 实现提供的构建、静态检查和自动化测试命令。
+- 优先使用自动化测试；只有用户可见且无法自动覆盖的行为才生成手工测试清单。
+
+## 仓库通用规则
+
 - 不使用worktree进行开发
 - 提前查看.gitignore，以确认哪些更改不需要commit
 - 用户没有要求的话，不要擅自commit，不要擅自Push，不创建PR，不创建或改变branch，这些操作由用户自行进行
 
-## 架构概览
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues for `Nightchamp/arknights-frame-assistant`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Triage uses the five canonical labels with their default names. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This repo uses a single-context layout: `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+## Windows 实现：架构概览
 
 ### 启动流程
 
@@ -115,16 +145,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 代码规范
 
 参考 CONTRIBUTING.md：
-- 函数名/方法名/全局变量/静态变量：大驼峰 `CheckVersion()`
-- 局部变量：小驼峰 `gameProcess`
-- 常量：全大写 `MAX_RETRY`
-- 注释使用 `;`（单行）或 `/* */`（多行）
+- `.ahk` 文件：函数名/方法名/全局变量/静态变量使用大驼峰 `CheckVersion()`，局部变量使用小驼峰 `gameProcess`，常量使用全大写 `MAX_RETRY`，注释使用 `;`（单行）或 `/* */`（多行）。
+- macOS 源码：遵循所用语言的官方惯例及项目内格式化、静态检查配置，不套用 AHK 命名或注释语法。
 - 行尾与格式约定：`.gitattributes` 规范文本文件"检出 CRLF、提交 LF"（`.ahk`/`.md` 为 `eol=crlf`，`.github/**` 的 yml/py 保持 LF）；VS Code 配置 4 空格缩进、UTF-8 无 BOM、不自动格式化，写文件时遵循避免 PR 噪音
 - Commit 遵循 Conventional Commits：`feat(scope): subject`，subject部分使用中文。scope 与改动涉及的模块文件名保持一致（如 `game_keys`、`hotkey_actions`），测试清单的 scope 与常规不同，使用 `test` 且类型为 `docs`（如 `docs(test):`）
 - 分支命名：`feat/描述`、`fix/描述`、`ui/描述`、`docs/描述`、`style/描述`、`perf/描述`、`refactor/描述` 等
 - PR 目标分支：`develop`（非 main）
 
-## 版本号
+## Windows 实现：版本号
 
 - **AFA**：在 `src/lib/version.ahk` 的 `Version.Number` 中定义，版本检查器通过 GitHub API 或国内源 CDN 对比此值与远程 release tag/version.json
 - **AHK**：当前为 v2.0.26
