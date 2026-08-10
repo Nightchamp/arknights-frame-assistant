@@ -400,8 +400,11 @@ private func run() throws {
     guard sample.frontmostApplication?.pid == target.pid else {
         throw ProbeError.targetNotFrontmost
     }
-    let moveCandidates = sample.targetWindows.filter {
-        $0.layer == 0 && $0.isOnScreen == true && ($0.alpha ?? 1) > 0
+    let moveCandidates = sample.targetWindows.filter { window in
+        window.layer == 0
+            && window.isOnScreen == true
+            && (window.alpha ?? 1) > 0
+            && sample.displays.contains { approximatelyEqual(window.cgBounds, $0.cgBounds) }
     }
     guard
         moveCandidates.count == 1,

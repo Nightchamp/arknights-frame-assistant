@@ -4,6 +4,8 @@ This throwaway Swift CLI answers GitHub issue #6: can public macOS APIs identify
 full-screen target window, correlate it to a display, normalize the current pointer, and
 temporarily move and restore the pointer without using screen capture or game-private data?
 
+The completed runtime verdict and measurements are in [`RESULTS.md`](RESULTS.md).
+
 It is not production code. It never clicks and never sends a game key.
 
 ## Build
